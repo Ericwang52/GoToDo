@@ -21,8 +21,10 @@ type User struct {
 	Password 	 string
   }
 func main() {
-	dsn := "host=localhost user=gorm password=gorm dbname=gorm port=9920 sslmode=disable TimeZone=Asia/Shanghai"
+	dsn := "host=localhost user=ericwang dbname=ericwang port=5432 sslmode=disable TimeZone=Asia/Shanghai"
 	db, _ := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+  db.AutoMigrate(&User{})
+
 	user := User{Name: "test", Password: "test"}
 
 	db.Create(&user) // pass pointer of data to Create
@@ -33,7 +35,9 @@ func main() {
 //     return c.SendString("Hello, World!")
 //   })
   app.Get("/api/items", func(c *fiber.Ctx) error {
-     return c.SendString("Hello, World!")
+    result := map[string]interface{}{}
+      db.Table("users").Take(&result)
+     return c.SendString(result["name"].(string))
    })
   app.Post("/api/items", func(c *fiber.Ctx) error {
 	return c.SendString("Hello, World!")
