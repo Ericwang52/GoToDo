@@ -1,7 +1,8 @@
 package main
 
 import (
-
+  // "github.com/gofiber/fiber/v2/middleware/csrf"
+  "github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -29,14 +30,17 @@ type User struct {
     Content string
     Done bool
   }
+
 func main() {
+
 	dsn := "host=localhost user=ericwang dbname=ericwang port=5432 sslmode=disable TimeZone=Asia/Shanghai"
 	db, _ := gorm.Open(postgres.Open(dsn), &gorm.Config{})
   db.AutoMigrate(&User{}, &ToDo{})
 
   app := fiber.New()
+  session := session.New()
 
-
+  
   app.Get("/api/items", func(c *fiber.Ctx) error {
     var users []User
     db.Where("id = ?", 1).Preload("ToDos").Find(&users)
@@ -62,9 +66,49 @@ func main() {
     // return c.JSON(fiber.Map{"status": "success", "message": "user created", "data": nil})
   })
   app.Post("/login", func(c *fiber.Ctx) error {
+  
+    u := &User{}
+    user := new(User)
+
+    err := c.BodyParser(user)
 
 
-    return c.Redirect("/")
+    db.Where("name = ?", user.Name).Where("password = ?", user.Password).Preload("ToDos").Find(&u)
+  
+    // if errors.Is(err, gorm.ErrRecordNotFound) {
+    //   return fiber.NewError(fiber.StatusUnauthorized, "Invalid email or password")
+    // }
+  
+    // if err := password.Verify(u.Password, b.Password); err != nil {
+    //   return fiber.NewError(fiber.StatusUnauthorized, "Invalid email or password")
+    // }
+  
+    // t := jwt.Generate(&jwt.TokenPayload{
+    //   ID: u.ID,
+    // })
+  
+    sess, err := session.Get(c)
+    if err != nil {
+      panic(err)
+    }
+  
+    // Set key/value
+    sess.Set("user", u.ID)
+    // sess.Set("token", t)
+  
+    // save session
+    if err := sess.Save(); err != nil {
+      panic(err)
+    }
+  
+    // Expire csrf cookie
+    // ctx.Cookie(&fiber.Cookie{
+    // 	Name:    "csrf_",
+    // 	Expires: time.Now().Add(-1 * time.Minute),
+    // })
+  
+    return c.JSON(u)
+
 })
   app.Post("/api/items", func(c *fiber.Ctx) error {
     // user := new(User)
