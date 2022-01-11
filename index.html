@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+
+<html>
+<body>
+
+<h1>To Do App</h1>
+
+<script >
+    window.onload = function (){
+fetch('http://localhost:3000/api/items')
+  .then(response => response.json())
+  .then(data => console.log(data))
+}
+console.log("test1")
+
+</script>
+
+</body>
+</html>
