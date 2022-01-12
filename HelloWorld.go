@@ -2,7 +2,10 @@ package main
 
 import (
   // "github.com/gofiber/fiber/v2/middleware/csrf"
+  "fmt"
   "github.com/gofiber/fiber/v2/middleware/session"
+  // "github.com/gofiber/template/html"
+
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -24,6 +27,11 @@ type User struct {
   ToDos []ToDo 
 
   }
+  type UserIn struct {
+    UserID uint8
+    //jwt here
+  
+    }
   type ToDo struct {
     ID uint8
     UserID uint8
@@ -36,15 +44,27 @@ func main() {
 	dsn := "host=localhost user=ericwang dbname=ericwang port=5432 sslmode=disable TimeZone=Asia/Shanghai"
 	db, _ := gorm.Open(postgres.Open(dsn), &gorm.Config{})
   db.AutoMigrate(&User{}, &ToDo{})
+  session := session.New()
+  // engine := html.New("./views", ".html")
 
   app := fiber.New()
-  session := session.New()
+app.Get("/", func(c *fiber.Ctx) error {
+    // Render index template
+    userIn := new(UserIn)
+    c.BodyParser(userIn)  
+    var user User
+    db.Where("id = ?", userIn.UserID).Preload("ToDos").Find(&user)
 
-  
+    return c.Render("index.html", fiber.Map{
+    })
+})
+
   app.Get("/api/items", func(c *fiber.Ctx) error {
-    var users []User
-    db.Where("id = ?", 1).Preload("ToDos").Find(&users)
-    return c.JSON(users)
+    // userIn := new(UserIn)
+    // c.BodyParser(userIn)  
+    var user User
+    db.Where("id = ?", 1).Preload("ToDos").Find(&user)
+    return c.JSON(user)
     })
   app.Post("/api/users/register", func(c *fiber.Ctx) error {
     user := new(User)
@@ -111,36 +131,45 @@ func main() {
 
 })
   app.Post("/api/items", func(c *fiber.Ctx) error {
-    // user := new(User)
-    // c.BodyParser(user)  
+     userIn := new(UserIn)
+     c.BodyParser(userIn)  
+     toDo := new(ToDo)
+     c.BodyParser(toDo)  
     var user User
-    db.Where("id = ?", 1).Preload("ToDos").Find(&user)
-    db.Model(&user).Association("ToDos").Append(&ToDo{Content:"asddd",Done:false})
+    db.Where("id = ?", userIn.UserID).Preload("ToDos").Find(&user)
+    db.Model(&user).Association("ToDos").Append(toDo)
 
     return c.JSON(fiber.Map{"status": "success", "message": "Created ToDo", "data": user})
   })
   app.Delete("/api/items/:id", func(c *fiber.Ctx) error {
+    userIn := new(UserIn)
+    c.BodyParser(userIn)  
     var todo ToDo
-    db.Where("id = ?", c.Params("id")).Find(&todo)
+    db.Where("id = ?", c.Params("id")).Where("user_id = ?", userIn.UserID).Find(&todo)
     // var user User
     // db.Where("id = ?",todo.UserID).Find(&user)
     db.Delete(&todo)
     // db.Model(&user).Association("ToDos").Delete(todo)
-
-    return c.JSON(fiber.Map{"status": "success", "message": "Deleted ToDo", "data": todo})
+    var user User
+    db.Where("id = ?", 1).Preload("ToDos").Find(&user)
+    return c.JSON(fiber.Map{"status": "success", "message": "Deleted ToDo", "data": user})
   })
   app.Patch("/api/items/:id", func(c *fiber.Ctx) error {
     todoIn := new(ToDo)
-
+    userIn := new(UserIn)
+    c.BodyParser(userIn)  
     // Store the body in the note and return error if encountered
     c.BodyParser(todoIn)
 
     var todo ToDo
-    db.Where("id = ?", c.Params("id")).Find(&todo)
+    fmt.Print(userIn.UserID);
+    db.Where("id = ? AND user_id = ?", c.Params("id"),userIn.UserID).Find(&todo)
     todo.Content = todoIn.Content
     todo.Done = todoIn.Done
     db.Save(&todo)
-	  return c.SendString("Hello, World!")
+    var user User
+    db.Where("id = ?", 1).Preload("ToDos").Find(&user)
+	  return  c.JSON(fiber.Map{"status": "success", "message": "Patched ToDo", "data": user})
   })
 
   app.Listen(":3000")
