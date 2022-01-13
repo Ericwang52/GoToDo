@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+
+<html>
+<body>
+
+<h1>To Do App</h1>
+
+<script >
+    function loadList(data){
+        console.log(data)
+        ul = document.createElement('ul');
+        document.getElementById('todos').innerHTML=""
+        document.getElementById('todos').appendChild(ul);
+
+        data.ToDos.forEach(function (item) {
+            let li = document.createElement('li');
+            let text=document.createElement('span');
+            text.className="toDO"
+            let button=document.createElement('button')
+            button.innerHTML="delete"
+            button.className=item.ID
+            ul.appendChild(li);
+            li.appendChild(text)
+            li.appendChild(button)
+            text.ID=item.ID
+            text.innerHTML += item.Content;
+            
+        });
+    }
+    window.onload = function (){
+    fetch('http://localhost:3000/api/items')
+    .then(response => response.json())
+    .then(data => {
+        loadList(data)
+    })
+
+    document.addEventListener('click',function(e){
+    if(e.target && e.target.className== 'toDO'){
+        console.log(e.target)
+        input= document.createElement('input');
+        input.type = "text";
+        input.value=e.target.innerHTML
+        let parent= e.target.parentElement
+        parent.replaceChild(input, e.target)
+
+        input.addEventListener("keyup", function(event) {
+            if (event.keyCode === 13) {
+                event.preventDefault();
+                const data = {
+                    "UserID": 1,
+                    "Content": input.value,
+                    "Done": false
+                };
+                fetch('http://localhost:3000/api/items/'+e.target.ID, {
+                    method: 'PATCH', 
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data)
+                        loadList(data.data)
+                    })
+                    .catch((error) => {
+                        console.error('Error:', error);
+                    }); 
+                    parent.replaceChild(e.target, input)
+                }
+        })
+
+    }
+    if(e.target && e.target.id== 'add'){
+        console.log(document.getElementById("text").value)
+        const data = {
+                "UserID": 1,
+                "Content": document.getElementById("text").value,
+                "Done": false
+            };
+        document.getElementById("text").value=""
+        fetch('http://localhost:3000/api/items', {
+            method: 'POST', 
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data)
+                loadList(data.data)
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });        
+        }
+        if(e.target && e.target.innerHTML== 'delete'){
+        const data = {
+                    "UserID": 1,
+                };
+        fetch('http://localhost:3000/api/items/'+e.target.className, {
+            method: 'DELETE', 
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data)
+                loadList(data.data)
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+    });
+   
+
+}
+console.log("test1")
+
+</script>
+    <div id="todos"></div>
+    <input type="text" id="text">
+    <button id="add">Add New</button>
+
+</body>
+</html>
