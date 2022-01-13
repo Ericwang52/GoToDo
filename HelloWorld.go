@@ -1,11 +1,9 @@
 package main
 
 import (
-  // "github.com/gofiber/fiber/v2/middleware/csrf"
+  "github.com/gofiber/fiber/v2/middleware/csrf"
   "fmt"
   "github.com/gofiber/fiber/v2/middleware/session"
-  // "github.com/gofiber/template/html"
-
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -49,6 +47,8 @@ func main() {
 
   app := fiber.New()
 app.Get("/", func(c *fiber.Ctx) error {
+    app.Use(csrf.New())
+
     // Render index template
     userIn := new(UserIn)
     c.BodyParser(userIn)  
