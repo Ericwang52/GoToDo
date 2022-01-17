@@ -9,7 +9,8 @@ import (
 	"gorm.io/gorm"
 	"golang.org/x/crypto/bcrypt"
   )
-  func HashPassword(password string) (string, error) {
+  
+func HashPassword(password string) (string, error) {
     bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
     return string(bytes), err
 }
@@ -46,8 +47,8 @@ func main() {
   // engine := html.New("./views", ".html")
 
   app := fiber.New()
+  app.Use(csrf.New())
 app.Get("/", func(c *fiber.Ctx) error {
-    app.Use(csrf.New())
 
     // Render index template
     userIn := new(UserIn)

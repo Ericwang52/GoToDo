@@ -1,11 +1,12 @@
 <!DOCTYPE html>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
 <html>
 <body>
 
 <h1>To Do App</h1>
 
-<script >
+<script>
     function loadList(data){
         console.log(data)
         ul = document.createElement('ul');
@@ -95,7 +96,7 @@
                 console.error('Error:', error);
             });        
         }
-        if(e.target && e.target.innerHTML== 'delete'){
+        if(e.target && e.target.innerHTML== 'delete'){ 
         const data = {
                     "UserID": 1,
                 };
